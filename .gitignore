@@ -15,3 +15,6 @@ Makefile
 CMakeUserPresets.json
 
 .vscode
+
+# Source documents
+documents/*.txt
