@@ -57,6 +57,15 @@ ranking.**
                                       sorting, and data structures
   -----------------------------------------------------------------------
 
+### Prerequisites
+
+Before building or running the project, install the `curl` and
+`nlohmann-json` libraries. On Debian/Ubuntu, these can be installed with:
+
+``` bash
+sudo apt install curl libcurl4-openssl-dev nlohmann-json3-dev
+```
+
 ### Embedding model
 
 The initial model is `nomic-embed-text:v1.5`, accessed through Ollama's
