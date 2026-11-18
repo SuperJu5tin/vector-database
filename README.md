@@ -153,38 +153,7 @@ The initial implementation uses **exact brute-force search**. Every
 stored embedding is compared with the query. Approximate
 nearest-neighbor indexes are outside the initial scope.
 
-## Data Model
-
-Keep document content, chunks, and embeddings as separate concepts.
-
-A possible starting point for the data structures is:
-
-``` cpp
-struct Chapter {
-    int id;
-    std::string name;
-};
-
-struct Chunk {
-    int id;
-    int chapterId;
-    std::string content;
-};
-
-struct Embedding {
-    int chunkId;
-    std::vector<float> values;
-};
-```
-
-The application can maintain collections such as:
-
-``` cpp
-std::vector<Chapter> chapters;
-std::vector<Chunk> chunks;
-std::vector<Embedding> embeddings;
-```
-
+### 3. Chunking
 Relationships:
 
 ``` text
