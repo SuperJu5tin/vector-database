@@ -1,4 +1,5 @@
 file(MAKE_DIRECTORY "${OUTPUT_DIR}/documents")
+file(MAKE_DIRECTORY "${OUTPUT_DIR}/output")
 file(COPY "${SOURCE_DIR}/documents/frankenstein.txt"
      DESTINATION "${OUTPUT_DIR}/documents")
 
@@ -14,9 +15,19 @@ if(NOT result STREQUAL "0")
   message(FATAL_ERROR "assignment failed: ${error}")
 endif()
 
-if(NOT terminal_output STREQUAL "")
-  message(FATAL_ERROR "assignment unexpectedly wrote chunks to the terminal")
+if(NOT terminal_output MATCHES "Text: ")
+  message(FATAL_ERROR "assignment did not print chunk text")
 endif()
+
+if(NOT terminal_output MATCHES "Embedding: \\[")
+  message(FATAL_ERROR "assignment did not print embeddings")
+endif()
+
+foreach(test_input IN ITEMS cat dog bird)
+  if(NOT terminal_output MATCHES "Text: ${test_input}")
+    message(FATAL_ERROR "assignment did not print test input ${test_input}")
+  endif()
+endforeach()
 
 set(output_file "${OUTPUT_DIR}/frankenstein_chunks.txt")
 if(NOT EXISTS "${output_file}")
