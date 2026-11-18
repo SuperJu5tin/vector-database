@@ -18,3 +18,4 @@ CMakeUserPresets.json
 
 # Source documents
 documents/*.txt
+output

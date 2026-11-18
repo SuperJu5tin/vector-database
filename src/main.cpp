@@ -21,7 +21,7 @@ int main() {
         ChunkedComponent book("Frankenstein", bookFile.getData());
         const std::vector<std::string> chunks = book.getChunks();
         const std::vector<int> chunkIds = book.getChunkIds();
-        std::ofstream outputFile("frankenstein_chunks.txt", std::ios::trunc);
+        std::ofstream outputFile("output/frankenstein_chunks.txt", std::ios::trunc);
         if (!outputFile) {
             throw std::runtime_error(
                 "Unable to open frankenstein_chunks.txt for writing");
