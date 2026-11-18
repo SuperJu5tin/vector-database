@@ -143,7 +143,7 @@ std::vector<std::string> ChunkedComponent::splitChapters(std::string bookData) {
                 splitChapters.push_back(bookData.substr(start, breakPoint - start));
             }
 
-            start = breakPoint;
+            start = breakPoint + static_cast<std::size_t>(current->length());
         }
 
         if (start < bookData.length()) {
