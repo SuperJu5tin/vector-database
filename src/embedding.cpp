@@ -23,7 +23,7 @@ size_t appendResponse(char* data, size_t size, size_t count, void* context) {
 
 Ollama::Ollama()
     : modelURL("http://localhost:11434/api/embed"),
-      modelName("nomic-embed-text:v1.5") {}
+      modelName("nomic-embed-text") {}
 
 std::vector<double> Ollama::getEmbedding(const std::string& input) {
     const std::vector<std::vector<double>> embeddings =
