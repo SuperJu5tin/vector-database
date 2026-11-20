@@ -92,6 +92,12 @@ Use the model's task prefixes:
 The model generates the numerical embedding vectors. The C++ application
 stores and compares those vectors.
 
+### Generated output
+
+Running the application writes each chunk's ID and numeric embedding
+vector to `output/frankenstein_embeddings.txt`. Each entry contains a
+`Chunk ID` line followed by the vector; the original chunk text is omitted.
+
 ## Architecture
 
 The application has two main workflows: **document indexing** and

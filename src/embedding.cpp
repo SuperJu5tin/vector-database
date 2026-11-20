@@ -7,13 +7,18 @@
  */
 
 #include <embedding.h>
-
-#include <stdexcept>
-#include <utility>
+#include <chunking_component.h>
+#include <file_input.h>
 
 using json = nlohmann::json;
 
 namespace {
+ChunkedComponent loadBook(const std::string& bookName,
+                          const std::string& filePath) {
+    FileHandler file(filePath);
+    return ChunkedComponent(bookName, file.getData());
+}
+
 size_t appendResponse(char* data, size_t size, size_t count, void* context) {
     const size_t totalSize = size * count;
     std::string* response = static_cast<std::string*>(context);
@@ -102,40 +107,153 @@ std::vector<std::vector<double>> Ollama::getEmbeddings(
     return embeddings;
 }
 
+Embedding::Embedding(std::vector<double> embedding)
+    : embedding(std::move(embedding)) {}
+
 Embedding::Embedding(std::vector<double> embedding, int id)
     : id(id), embedding(std::move(embedding)) {}
 
 Embedding::Embedding(const std::string& text, int id)
     : id(id), embedding(Ollama().getEmbedding(text)) {}
 
-std::vector<double> Embedding::getEmbedding() {
+std::vector<double> Embedding::getEmbedding() const {
     return embedding;
 }
 
-int Embedding::getId() {
+std::optional<int> Embedding::getId() const {
     return id;
 }
 
 Embeddings::Embeddings() = default;
 
 Embeddings::Embeddings(std::vector<double> embedding)
-    : embeddings{std::move(embedding)} {}
+    : embeddings{Embedding(std::move(embedding))} {}
 
-Embeddings::Embeddings(std::vector<std::vector<double>> initialEmbeddings)
-    : embeddings(std::move(initialEmbeddings)) {}
+Embeddings::Embeddings(std::vector<std::vector<double>> initialEmbeddings) {
+    embeddings.reserve(initialEmbeddings.size());
+    for (std::vector<double>& embedding : initialEmbeddings) {
+        embeddings.emplace_back(std::move(embedding));
+    }
+}
+
+Embeddings::Embeddings(std::initializer_list<double> embedding)
+    : embeddings{Embedding(std::vector<double>(embedding))} {}
+
+Embeddings::Embeddings(
+    std::initializer_list<std::initializer_list<double>> initialEmbeddings) {
+    embeddings.reserve(initialEmbeddings.size());
+    for (const std::initializer_list<double>& embedding : initialEmbeddings) {
+        embeddings.emplace_back(std::vector<double>(embedding));
+    }
+}
+
+Embeddings::Embeddings(const std::string& input) {
+    embeddings.emplace_back(ollama.getEmbedding(input));
+}
+
+Embeddings::Embeddings(const std::vector<std::string>& input) {
+    std::vector<std::vector<double>> generated = ollama.getEmbeddings(input);
+    embeddings.reserve(generated.size());
+    for (std::vector<double>& embedding : generated) {
+        embeddings.emplace_back(std::move(embedding));
+    }
+}
+
+Embeddings::Embeddings(const ChunkedComponent& component) {
+    const std::vector<std::string> chunks = component.getChunks();
+    const std::vector<int> chunkIds = component.getChunkIds();
+    if (chunks.size() != chunkIds.size()) {
+        throw std::runtime_error(
+            "Chunk text and ID counts do not match");
+    }
+
+    std::vector<std::vector<double>> generated = ollama.getEmbeddings(chunks);
+    if (generated.size() != chunkIds.size()) {
+        throw std::runtime_error(
+            "Ollama returned a different number of embeddings than chunks");
+    }
+
+    embeddings.reserve(generated.size());
+    for (std::size_t index = 0; index < generated.size(); ++index) {
+        embeddings.emplace_back(std::move(generated[index]), chunkIds[index]);
+    }
+}
+
+Embeddings::Embeddings(const std::string& bookName, const std::string& filePath)
+    : Embeddings(loadBook(bookName, filePath)) {}
 
 void Embeddings::addEmbedding(std::vector<double> embedding) {
-    embeddings.push_back(std::move(embedding));
+    embeddings.emplace_back(std::move(embedding));
 }
 
 void Embeddings::addEmbeddings(
     std::vector<std::vector<double>> newEmbeddings) {
     for (std::vector<double>& embedding : newEmbeddings) {
-        embeddings.push_back(std::move(embedding));
+        embeddings.emplace_back(std::move(embedding));
     }
 }
 
-std::vector<std::vector<double>> Embeddings::getEmbeddings() {
+void Embeddings::addEmbedding(std::initializer_list<double> embedding) {
+    embeddings.emplace_back(std::vector<double>(embedding));
+}
+
+void Embeddings::addEmbeddings(
+    std::initializer_list<std::initializer_list<double>> newEmbeddings) {
+    embeddings.reserve(embeddings.size() + newEmbeddings.size());
+    for (const std::initializer_list<double>& embedding : newEmbeddings) {
+        embeddings.emplace_back(std::vector<double>(embedding));
+    }
+}
+
+void Embeddings::addEmbedding(const std::string& input) {
+    embeddings.emplace_back(ollama.getEmbedding(input));
+}
+
+void Embeddings::addEmbeddings(const std::vector<std::string>& input) {
+    std::vector<std::vector<double>> newEmbeddings = ollama.getEmbeddings(input);
+    for (std::vector<double>& embedding : newEmbeddings) {
+        embeddings.emplace_back(std::move(embedding));
+    }
+}
+
+std::vector<std::vector<double>> Embeddings::getEmbeddings() const {
+    std::vector<std::vector<double>> result;
+    result.reserve(embeddings.size());
+    for (const Embedding& embedding : embeddings) {
+        result.push_back(embedding.getEmbedding());
+    }
+    return result;
+}
+
+std::vector<Embedding> Embeddings::getEmbeddingObjects() const {
     return embeddings;
+}
+
+// Cosine Similiarity Calculation (because of modern embeddings magnitude always evaluating to 1 this is equivalent to the dot product) 
+float cosineSimilarityCalc(Embedding A, Embedding B) {
+    
+    const std::vector<double>& embeddingA = A.getEmbedding();
+    const std::vector<double>& embeddingB = B.getEmbedding();
+
+    if (embeddingA.size() != embeddingB.size()) {
+        throw std::invalid_argument("Embeddings must be the same size");
+    }
+
+    double dotProduct = 0.0;
+    double magnitudeA = 0.0;
+    double magnitudeB = 0.0;
+
+    for (size_t i = 0; i < embeddingA.size(); ++i) {
+        dotProduct += embeddingA[i] * embeddingB[i];
+        magnitudeA += embeddingA[i] * embeddingA[i];
+        magnitudeB += embeddingB[i] * embeddingB[i];
+    }
+
+    if (magnitudeA == 0.0 || magnitudeB == 0.0) {
+        throw std::invalid_argument("Embeddings must have a non-zero magnitude");
+    }
+
+    return static_cast<float>(
+        dotProduct / (std::sqrt(magnitudeA) * std::sqrt(magnitudeB)));
 }
 

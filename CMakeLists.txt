@@ -13,6 +13,7 @@ add_executable(assignment
   src/file_input.cpp
   src/chunking_component.cpp
   src/embedding.cpp
+  src/file_output.cpp
 )
 target_include_directories(assignment PRIVATE include)
 target_compile_options(assignment PRIVATE -Wall -Wextra -Wpedantic)
@@ -30,6 +31,9 @@ if(BUILD_TESTING)
   add_executable(embedding_test
     tests/embedding_test.cpp
     src/embedding.cpp
+    src/chunking_component.cpp
+    src/file_input.cpp
+    src/file_output.cpp
   )
   target_include_directories(embedding_test PRIVATE include)
   target_compile_options(embedding_test PRIVATE -Wall -Wextra -Wpedantic)
@@ -37,10 +41,9 @@ if(BUILD_TESTING)
   add_test(NAME embedding_test COMMAND embedding_test)
 
   add_test(
-    NAME frankenstein_chunk_output
+    NAME embedding_output_integration
     COMMAND ${CMAKE_COMMAND}
       -DASSIGNMENT_EXECUTABLE=$<TARGET_FILE:assignment>
-      -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
       -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_main_output.cmake
   )

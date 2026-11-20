@@ -6,62 +6,20 @@
  * Description: Vector Database Search Engine
  */
 
-#include "chunking_component.h"
 #include "embedding.h"
-#include "file_input.h"
+#include "file_output.h"
 
 #include <exception>
-#include <fstream>
 #include <iostream>
-#include <stdexcept>
-#include <vector>
 
 int main() {
     try {
-        FileHandler bookFile("documents/frankenstein.txt");
-        ChunkedComponent book("Frankenstein", bookFile.getData());
-        const std::vector<std::string> chunks = book.getChunks();
-        const std::vector<int> chunkIds = book.getChunkIds();
-        std::ofstream outputFile("output/frankenstein_chunks.txt", std::ios::trunc);
-        if (!outputFile) {
-            throw std::runtime_error(
-                "Unable to open frankenstein_chunks.txt for writing");
-        }
-
-        for (std::size_t index = 0; index < chunks.size(); ++index) {
-            outputFile << "Chunk ID: " << chunkIds[index] << '\n'
-                       << chunks[index] << "\n\n";
-        }
-
-        outputFile.close();
-        if (!outputFile) {
-            throw std::runtime_error(
-                "Unable to write all chunks to frankenstein_chunks.txt");
-        }
-
-        const std::vector<std::string> testInputs = {"cat", "dog", "bird"};
-        Ollama ollama;
-        const std::vector<std::vector<double>> embeddings =
-            ollama.getEmbeddings(testInputs);
-        if (embeddings.size() != testInputs.size()) {
-            throw std::runtime_error(
-                "Ollama returned a different number of embeddings than inputs");
-        }
-
-        for (std::size_t index = 0; index < testInputs.size(); ++index) {
-            std::cout << "Text: " << testInputs[index] << '\n'
-                      << "Embedding: [";
-            for (std::size_t valueIndex = 0;
-                 valueIndex < embeddings[index].size(); ++valueIndex) {
-                if (valueIndex > 0) {
-                    std::cout << ", ";
-                }
-                std::cout << embeddings[index][valueIndex];
-            }
-            std::cout << "]\n\n";
-        }
+        const Embeddings bookEmbeddings(
+            "Frankenstein", "documents/frankenstein.txt");
+        FileOutput().writeEmbeddings(
+            bookEmbeddings, "output/frankenstein_embeddings.txt");
     } catch (const std::exception& error) {
-        std::cerr << "Unable to process Frankenstein chunks and test embeddings: "
+        std::cerr << "Unable to process Frankenstein chunks and embeddings: "
                   << error.what() << '\n';
         return 1;
     }

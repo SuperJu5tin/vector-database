@@ -1,7 +1,7 @@
 file(MAKE_DIRECTORY "${OUTPUT_DIR}/documents")
 file(MAKE_DIRECTORY "${OUTPUT_DIR}/output")
-file(COPY "${SOURCE_DIR}/documents/frankenstein.txt"
-     DESTINATION "${OUTPUT_DIR}/documents")
+file(WRITE "${OUTPUT_DIR}/documents/frankenstein.txt"
+     "Chapter 1\nFirst test paragraph.\n\nSecond test paragraph.\n")
 
 execute_process(
   COMMAND "${ASSIGNMENT_EXECUTABLE}"
@@ -15,42 +15,28 @@ if(NOT result STREQUAL "0")
   message(FATAL_ERROR "assignment failed: ${error}")
 endif()
 
-if(NOT terminal_output MATCHES "Text: ")
-  message(FATAL_ERROR "assignment did not print chunk text")
+if(NOT terminal_output STREQUAL "")
+  message(FATAL_ERROR "assignment unexpectedly printed to the console")
 endif()
 
-if(NOT terminal_output MATCHES "Embedding: \\[")
-  message(FATAL_ERROR "assignment did not print embeddings")
+set(embeddings_file "${OUTPUT_DIR}/output/frankenstein_embeddings.txt")
+if(NOT EXISTS "${embeddings_file}")
+  message(FATAL_ERROR "assignment did not create frankenstein_embeddings.txt")
+endif()
+file(READ "${embeddings_file}" embeddings_output)
+
+if(NOT embeddings_output MATCHES "Chunk ID: 1")
+  message(FATAL_ERROR "embeddings file is missing the first chunk ID")
 endif()
 
-foreach(test_input IN ITEMS cat dog bird)
-  if(NOT terminal_output MATCHES "Text: ${test_input}")
-    message(FATAL_ERROR "assignment did not print test input ${test_input}")
-  endif()
-endforeach()
-
-set(output_file "${OUTPUT_DIR}/output/frankenstein_chunks.txt")
-if(NOT EXISTS "${output_file}")
-  message(FATAL_ERROR "assignment did not create frankenstein_chunks.txt")
-endif()
-file(READ "${output_file}" output)
-
-if(NOT output MATCHES "Chunk ID: 1")
-  message(FATAL_ERROR "output file does not contain chunk IDs and text")
+if(NOT embeddings_output MATCHES "Chunk ID: 2")
+  message(FATAL_ERROR "embeddings file is missing the second chunk ID")
 endif()
 
-if(output MATCHES "Chunk ID: [0-9]+\nChapter [0-9]+")
-  message(FATAL_ERROR "output file contains a chapter heading as a chunk")
+if(NOT embeddings_output MATCHES "\\[[ \t\r\n]*[-0-9]")
+  message(FATAL_ERROR "embeddings file does not contain numeric vector values")
 endif()
 
-if(NOT output MATCHES "lost in darkness and distance\\.")
-  message(FATAL_ERROR "output file does not contain the end of the book")
-endif()
-
-string(REGEX MATCHALL "Chunk ID: [0-9]+" chunk_headers "${output}")
-list(LENGTH chunk_headers chunk_count)
-list(GET chunk_headers -1 last_header)
-string(REGEX REPLACE "Chunk ID: " "" last_id "${last_header}")
-if(NOT last_id EQUAL chunk_count)
-  message(FATAL_ERROR "output file does not contain every chunk")
+if(embeddings_output MATCHES "First test paragraph|Second test paragraph")
+  message(FATAL_ERROR "embeddings file unexpectedly contains chunk text")
 endif()

@@ -10,8 +10,14 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <initializer_list>
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
+#include <optional>
+#include <stdexcept>
+#include <utility>
+
+class ChunkedComponent;
 
 class Ollama {
 private:
@@ -26,24 +32,37 @@ public:
 
 class Embedding {
 private:
-    int id;
+    std::optional<int> id;
     std::vector<double> embedding;
 public:
+    explicit Embedding(std::vector<double> embedding);
     Embedding(std::vector<double> embedding, int id);
     Embedding(const std::string& text, int id);
-    std::vector<double> getEmbedding();
-    int getId();
+    std::vector<double> getEmbedding() const;
+    std::optional<int> getId() const;
 };
 
 class Embeddings {
 private:
-    std::vector<std::vector<double>> embeddings;
+    std::vector<Embedding> embeddings;
     Ollama ollama;
 public:
     Embeddings();
     Embeddings(std::vector<double> embedding);
     Embeddings(std::vector<std::vector<double>> embeddings);
+    Embeddings(std::initializer_list<double> embedding);
+    Embeddings(std::initializer_list<std::initializer_list<double>> embeddings);
+    Embeddings(const std::string& input);
+    Embeddings(const std::vector<std::string>& input);
+    Embeddings(const ChunkedComponent& component);
+    Embeddings(const std::string& bookName, const std::string& filePath);
     void addEmbedding(std::vector<double> embedding);
     void addEmbeddings(std::vector<std::vector<double>> embeddings);
-    std::vector<std::vector<double>> getEmbeddings();
+    void addEmbedding(std::initializer_list<double> embedding);
+    void addEmbeddings(std::initializer_list<std::initializer_list<double>> embeddings);
+    void addEmbedding(const std::string& input);
+    void addEmbeddings(const std::vector<std::string>& input);
+    float cosineSimilarityCalc(Embedding A, Embedding B);
+    std::vector<std::vector<double>> getEmbeddings() const;
+    std::vector<Embedding> getEmbeddingObjects() const;
 };
