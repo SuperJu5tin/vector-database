@@ -9,6 +9,7 @@
 #include <embedding.h>
 
 #include <stdexcept>
+#include <utility>
 
 using json = nlohmann::json;
 
@@ -100,3 +101,41 @@ std::vector<std::vector<double>> Ollama::getEmbeddings(
     }
     return embeddings;
 }
+
+Embedding::Embedding(std::vector<double> embedding, int id)
+    : id(id), embedding(std::move(embedding)) {}
+
+Embedding::Embedding(const std::string& text, int id)
+    : id(id), embedding(Ollama().getEmbedding(text)) {}
+
+std::vector<double> Embedding::getEmbedding() {
+    return embedding;
+}
+
+int Embedding::getId() {
+    return id;
+}
+
+Embeddings::Embeddings() = default;
+
+Embeddings::Embeddings(std::vector<double> embedding)
+    : embeddings{std::move(embedding)} {}
+
+Embeddings::Embeddings(std::vector<std::vector<double>> initialEmbeddings)
+    : embeddings(std::move(initialEmbeddings)) {}
+
+void Embeddings::addEmbedding(std::vector<double> embedding) {
+    embeddings.push_back(std::move(embedding));
+}
+
+void Embeddings::addEmbeddings(
+    std::vector<std::vector<double>> newEmbeddings) {
+    for (std::vector<double>& embedding : newEmbeddings) {
+        embeddings.push_back(std::move(embedding));
+    }
+}
+
+std::vector<std::vector<double>> Embeddings::getEmbeddings() {
+    return embeddings;
+}
+

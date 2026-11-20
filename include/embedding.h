@@ -24,6 +24,17 @@ public:
         const std::vector<std::string>& input);
 };
 
+class Embedding {
+private:
+    int id;
+    std::vector<double> embedding;
+public:
+    Embedding(std::vector<double> embedding, int id);
+    Embedding(const std::string& text, int id);
+    std::vector<double> getEmbedding();
+    int getId();
+};
+
 class Embeddings {
 private:
     std::vector<std::vector<double>> embeddings;

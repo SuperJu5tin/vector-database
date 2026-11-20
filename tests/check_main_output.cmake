@@ -29,7 +29,7 @@ foreach(test_input IN ITEMS cat dog bird)
   endif()
 endforeach()
 
-set(output_file "${OUTPUT_DIR}/frankenstein_chunks.txt")
+set(output_file "${OUTPUT_DIR}/output/frankenstein_chunks.txt")
 if(NOT EXISTS "${output_file}")
   message(FATAL_ERROR "assignment did not create frankenstein_chunks.txt")
 endif()
