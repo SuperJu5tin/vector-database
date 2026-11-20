@@ -230,7 +230,7 @@ std::vector<Embedding> Embeddings::getEmbeddingObjects() const {
 }
 
 // Cosine Similiarity Calculation (because of modern embeddings magnitude always evaluating to 1 this is equivalent to the dot product) 
-float cosineSimilarityCalc(Embedding A, Embedding B) {
+float Embeddings::cosineSimilarityCalc(Embedding A, Embedding B) {
     
     const std::vector<double>& embeddingA = A.getEmbedding();
     const std::vector<double>& embeddingB = B.getEmbedding();
@@ -257,3 +257,22 @@ float cosineSimilarityCalc(Embedding A, Embedding B) {
         dotProduct / (std::sqrt(magnitudeA) * std::sqrt(magnitudeB)));
 }
 
+std::vector<SearchResult> Embeddings::compareTextToVDB(std::string input) {
+    std::vector<SearchResult> results;
+
+    // get embedding to compare
+    Embedding searchTerm(ollama.getEmbedding(input));
+
+    const std::vector<Embedding> listOfEmbeddings = this->getEmbeddingObjects();
+    std::vector<SearchResult> listOfSearchResults;
+
+    for (const auto& embedding : listOfEmbeddings) {
+        float similarity = this->cosineSimilarityCalc(searchTerm, embedding);
+        SearchResult searchResult;
+        searchResult.id = embedding.getId().value_or(-1);
+        searchResult.CSScore = similarity;
+        results.push_back(searchResult);
+    }
+
+    return results;
+};

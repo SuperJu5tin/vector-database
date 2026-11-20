@@ -65,4 +65,10 @@ public:
     float cosineSimilarityCalc(Embedding A, Embedding B);
     std::vector<std::vector<double>> getEmbeddings() const;
     std::vector<Embedding> getEmbeddingObjects() const;
+    std::vector<SearchResult> compareTextToVDB(std::string input);
+};
+
+struct SearchResult {
+    int id;
+    int CSScore;
 };
